@@ -1,0 +1,17 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /trading-api
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/eru_trading
+    username: dev_user
+    password: dev_password
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
