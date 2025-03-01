@@ -143,7 +143,14 @@ class JwtTokenServiceTest {
         @Test
         @DisplayName("Should validate valid token")
         void should_validate_valid_token() {
-            // TODO: Implement test
+            // Arrange
+            String token = jwtTokenService.generateToken(userDetails);
+
+            // Act
+            boolean isValid = jwtTokenService.validateToken(token, userDetails);
+
+            // Assert
+            assertThat(isValid).isTrue();
         }
 
         @Test

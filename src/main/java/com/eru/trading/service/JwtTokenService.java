@@ -36,4 +36,18 @@ public class JwtTokenService {
                 .signWith(key)
                 .compact();
     }
+
+    public boolean validateToken(String token, UserDetails userDetails) {
+        Claims claims = Jwts.parser()
+                .verifyWith(Keys.hmacShaKeyFor(secret.getBytes()))
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
+
+        String username = claims.getSubject();
+        Date expiration = claims.getExpiration();
+
+        return username.equals(userDetails.getUsername()) &&
+                expiration.after(new Date());
+    }
 }
