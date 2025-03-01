@@ -74,7 +74,37 @@ class JwtTokenServiceTest {
         @Test
         @DisplayName("Should generate different tokens for different users")
         void should_generate_different_tokens_for_different_users() {
-            // TODO: Implement test
+            // Arrange
+            UserDetails user1 = mock(UserDetails.class);
+            UserDetails user2 = mock(UserDetails.class);
+            when(user1.getUsername()).thenReturn("user1");
+            when(user2.getUsername()).thenReturn("user2");
+
+            // Act
+            String token1 = jwtTokenService.generateToken(user1);
+            String token2 = jwtTokenService.generateToken(user2);
+
+            // Assert
+            assertThat(token1)
+                    .isNotNull()
+                    .isNotEqualTo(token2);
+
+            // Verify claims
+            Claims claims1 = Jwts.parser()
+                    .verifyWith(Keys.hmacShaKeyFor(SECRET_KEY.getBytes()))
+                    .build()
+                    .parseSignedClaims(token1)
+                    .getPayload();
+
+            Claims claims2 = Jwts.parser()
+                    .verifyWith(Keys.hmacShaKeyFor(SECRET_KEY.getBytes()))
+                    .build()
+                    .parseSignedClaims(token2)
+                    .getPayload();
+
+            assertThat(claims1.getSubject()).isEqualTo("user1");
+            assertThat(claims2.getSubject()).isEqualTo("user2");
+            assertThat(claims1.getSubject()).isNotEqualTo(claims2.getSubject());
         }
 
         @Test
