@@ -24,6 +24,20 @@ class JwtTokenServiceTest {
     private static final String SECRET_KEY = "8Zz5tw0Ionm3XPZZfN0NOml3z9FMfmpgXwovR9fp6ryDIoGRM8EPHAB6iHsc0fb";
     private static final long EXPIRATION_TIME = 3600000L; // 1 hour
 
+    /**
+     * 解析 JWT token 並返回其聲明
+     * 
+     * @param token JWT token 字符串
+     * @return token 中的聲明
+     */
+    private Claims parseToken(String token) {
+        return Jwts.parser()
+                .verifyWith(Keys.hmacShaKeyFor(SECRET_KEY.getBytes()))
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
+    }
+
     @BeforeEach
     void setUp() {
         jwtTokenService = new JwtTokenService();
@@ -57,13 +71,7 @@ class JwtTokenServiceTest {
 
             // Assert
             assertThat(token).isNotNull();
-
-            Claims claims = Jwts.parser()
-                    .verifyWith(Keys.hmacShaKeyFor(SECRET_KEY.getBytes()))
-                    .build()
-                    .parseSignedClaims(token)
-                    .getPayload();
-
+            Claims claims = parseToken(token);
             assertThat(claims.getSubject()).isEqualTo(username);
             assertThat(claims.getIssuedAt()).isNotNull();
             assertThat(claims.getExpiration())
@@ -90,17 +98,8 @@ class JwtTokenServiceTest {
                     .isNotEqualTo(token2);
 
             // Verify claims
-            Claims claims1 = Jwts.parser()
-                    .verifyWith(Keys.hmacShaKeyFor(SECRET_KEY.getBytes()))
-                    .build()
-                    .parseSignedClaims(token1)
-                    .getPayload();
-
-            Claims claims2 = Jwts.parser()
-                    .verifyWith(Keys.hmacShaKeyFor(SECRET_KEY.getBytes()))
-                    .build()
-                    .parseSignedClaims(token2)
-                    .getPayload();
+            Claims claims1 = parseToken(token1);
+            Claims claims2 = parseToken(token2);
 
             assertThat(claims1.getSubject()).isEqualTo("user1");
             assertThat(claims2.getSubject()).isEqualTo("user2");
@@ -117,12 +116,7 @@ class JwtTokenServiceTest {
             String token = jwtTokenService.generateToken(userDetails);
 
             // Assert
-            Claims claims = Jwts.parser()
-                    .verifyWith(Keys.hmacShaKeyFor(SECRET_KEY.getBytes()))
-                    .build()
-                    .parseSignedClaims(token)
-                    .getPayload();
-
+            Claims claims = parseToken(token);
             Date expirationDate = claims.getExpiration();
             assertThat(expirationDate).isNotNull();
 
