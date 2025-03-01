@@ -110,7 +110,35 @@ class JwtTokenServiceTest {
         @Test
         @DisplayName("Should include expiration time in token")
         void should_include_expiration_time_in_token() {
-            // TODO: Implement test
+            // Arrange
+            long currentTimeMillis = System.currentTimeMillis();
+
+            // Act
+            String token = jwtTokenService.generateToken(userDetails);
+
+            // Assert
+            Claims claims = Jwts.parser()
+                    .verifyWith(Keys.hmacShaKeyFor(SECRET_KEY.getBytes()))
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload();
+
+            Date expirationDate = claims.getExpiration();
+            assertThat(expirationDate).isNotNull();
+
+            // 驗證過期時間是否在當前時間的一小時後（允許1秒誤差）
+            long expectedExpirationTime = currentTimeMillis + EXPIRATION_TIME;
+            long actualExpirationTime = expirationDate.getTime();
+            long timeDifference = Math.abs(expectedExpirationTime - actualExpirationTime);
+
+            assertThat(timeDifference)
+                    .as("Expiration time should be within 1 second of expected time")
+                    .isLessThan(1000); // 允許1秒誤差
+
+            // 驗證過期時間是否在將來
+            assertThat(expirationDate)
+                    .isAfter(new Date(currentTimeMillis))
+                    .isBefore(new Date(currentTimeMillis + EXPIRATION_TIME + 1000));
         }
     }
 
