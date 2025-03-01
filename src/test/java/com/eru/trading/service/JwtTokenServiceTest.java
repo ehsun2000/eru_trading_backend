@@ -1,10 +1,16 @@
 package com.eru.trading.service;
 
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.core.userdetails.UserDetails;
+
+import java.util.Date;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
@@ -15,11 +21,22 @@ class JwtTokenServiceTest {
 
     private JwtTokenService jwtTokenService;
     private UserDetails userDetails;
+    private static final String SECRET_KEY = "8Zz5tw0Ionm3XPZZfN0NOml3z9FMfmpgXwovR9fp6ryDIoGRM8EPHAB6iHsc0fb";
+    private static final long EXPIRATION_TIME = 3600000L; // 1 hour
 
     @BeforeEach
     void setUp() {
-        // TODO: Initialize with actual secret key and expiration time
         jwtTokenService = new JwtTokenService();
+        try {
+            var secretField = JwtTokenService.class.getDeclaredField("secret");
+            var expirationField = JwtTokenService.class.getDeclaredField("expiration");
+            secretField.setAccessible(true);
+            expirationField.setAccessible(true);
+            secretField.set(jwtTokenService, SECRET_KEY);
+            expirationField.set(jwtTokenService, EXPIRATION_TIME);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
         userDetails = mock(UserDetails.class);
         when(userDetails.getUsername()).thenReturn("testUser");
     }
@@ -31,7 +48,27 @@ class JwtTokenServiceTest {
         @Test
         @DisplayName("Should generate token with correct claims")
         void should_generate_token_with_correct_claims() {
-            // TODO: Implement test
+            // Arrange
+            String username = "testUser";
+            when(userDetails.getUsername()).thenReturn(username);
+
+            // Act
+            String token = jwtTokenService.generateToken(userDetails);
+
+            // Assert
+            assertThat(token).isNotNull();
+
+            Claims claims = Jwts.parser()
+                    .verifyWith(Keys.hmacShaKeyFor(SECRET_KEY.getBytes()))
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload();
+
+            assertThat(claims.getSubject()).isEqualTo(username);
+            assertThat(claims.getIssuedAt()).isNotNull();
+            assertThat(claims.getExpiration())
+                    .isNotNull()
+                    .isAfter(new Date());
         }
 
         @Test

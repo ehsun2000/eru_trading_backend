@@ -1,3 +1,9 @@
 spring:
   profiles:
     active: @profileActive@
+
+jwt:
+  # 使用強密鑰 (至少 256 bits)
+  secret: 8Zz5tw0Ionm3XPZZfN0NOml3z9FMfmpgXwovR9fp6ryDIoGRM8EPHAB6iHsc0fb
+  # 設置 token 有效時間為 1 小時 (3600000 毫秒)
+  expiration: 3600000
