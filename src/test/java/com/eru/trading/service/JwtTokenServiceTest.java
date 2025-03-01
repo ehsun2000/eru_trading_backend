@@ -1,6 +1,7 @@
 package com.eru.trading.service;
 
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.junit.jupiter.api.BeforeEach;
@@ -155,8 +156,28 @@ class JwtTokenServiceTest {
 
         @Test
         @DisplayName("Should reject expired token")
-        void should_reject_expired_token() {
-            // TODO: Implement test
+        void should_reject_expired_token() throws Exception {
+            // Arrange - Set a very short expiration time for testing
+            long originalExpiration = EXPIRATION_TIME;
+            try {
+                var expirationField = JwtTokenService.class.getDeclaredField("expiration");
+                expirationField.setAccessible(true);
+                expirationField.set(jwtTokenService, 1000L); // Set to 1 second
+
+                String token = jwtTokenService.generateToken(userDetails);
+
+                // Act & Assert
+                Thread.sleep(1100); // Wait just over 1 second
+                assertThrows(ExpiredJwtException.class, () -> {
+                    parseToken(token);
+                }, "Token parsing should fail with ExpiredJwtException");
+
+            } finally {
+                // Restore original expiration time
+                var expirationField = JwtTokenService.class.getDeclaredField("expiration");
+                expirationField.setAccessible(true);
+                expirationField.set(jwtTokenService, originalExpiration);
+            }
         }
 
         @Test
