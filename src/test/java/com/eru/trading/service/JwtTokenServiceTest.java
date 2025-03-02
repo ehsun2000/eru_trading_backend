@@ -199,7 +199,13 @@ class JwtTokenServiceTest {
         @Test
         @DisplayName("Should reject malformed token")
         void should_reject_malformed_token() {
-            // TODO: Implement test
+            // Arrange
+            String malformedToken = "invalid.jwt.token";
+
+            // Act & Assert
+            assertThrows(io.jsonwebtoken.MalformedJwtException.class, () -> {
+                parseToken(malformedToken);
+            }, "Should throw MalformedJwtException for invalid token format");
         }
     }
 
