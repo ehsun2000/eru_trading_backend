@@ -216,7 +216,18 @@ class JwtTokenServiceTest {
         @Test
         @DisplayName("Should extract username from valid token")
         void should_extract_username_from_valid_token() {
-            // TODO: Implement test
+            // Arrange
+            String expectedUsername = "testUser";
+            when(userDetails.getUsername()).thenReturn(expectedUsername);
+            String token = jwtTokenService.generateToken(userDetails);
+
+            // Act
+            Claims claims = parseToken(token);
+
+            // Assert
+            assertThat(claims.getSubject())
+                    .as("Extracted username should match the original username")
+                    .isEqualTo(expectedUsername);
         }
 
         @Test
