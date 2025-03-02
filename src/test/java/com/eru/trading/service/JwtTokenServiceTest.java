@@ -219,7 +219,20 @@ class JwtTokenServiceTest {
         @Test
         @DisplayName("Should extract expiration time from valid token")
         void should_extract_expiration_from_valid_token() {
-            // TODO: Implement test
+            // Arrange
+            long currentTimeMillis = System.currentTimeMillis();
+            String token = jwtTokenService.generateToken(userDetails);
+
+            // Act
+            Claims claims = jwtTokenService.parseToken(token);
+            Date expirationDate = claims.getExpiration();
+
+            // Assert
+            assertThat(expirationDate)
+                    .as("Expiration date should be set to future time")
+                    .isNotNull()
+                    .isAfter(new Date())
+                    .isBefore(new Date(currentTimeMillis + EXPIRATION_TIME + 1000));
         }
 
         @Test
