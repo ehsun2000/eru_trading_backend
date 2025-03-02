@@ -155,8 +155,8 @@ class JwtTokenServiceTest {
         }
 
         @Test
-        @DisplayName("Should reject expired token")
-        void should_reject_expired_token() throws Exception {
+        @DisplayName("Should generate expired token exception")
+        void should_generate_expired_token_exception() throws Exception {
             // Arrange - Set a very short expiration time for testing
             long originalExpiration = EXPIRATION_TIME;
             try {
@@ -183,7 +183,17 @@ class JwtTokenServiceTest {
         @Test
         @DisplayName("Should reject token with invalid signature")
         void should_reject_token_with_invalid_signature() {
-            // TODO: Implement test
+            // Arrange
+            String token = jwtTokenService.generateToken(userDetails);
+            String wrongKey = "different-secret-key-that-is-also-at-least-256-bits-long";
+
+            // Act & Assert
+            assertThrows(io.jsonwebtoken.security.SignatureException.class, () -> {
+                Jwts.parser()
+                        .verifyWith(Keys.hmacShaKeyFor(wrongKey.getBytes()))
+                        .build()
+                        .parseSignedClaims(token);
+            }, "Token should be rejected when verified with wrong key");
         }
 
         @Test
