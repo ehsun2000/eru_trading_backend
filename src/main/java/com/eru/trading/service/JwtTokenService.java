@@ -37,13 +37,22 @@ public class JwtTokenService {
                 .compact();
     }
 
-    public boolean validateToken(String token, UserDetails userDetails) {
-        Claims claims = Jwts.parser()
+    /**
+     * 解析 JWT token 並返回其聲明
+     * 
+     * @param token JWT token 字符串
+     * @return token 中的聲明
+     */
+    public Claims parseToken(String token) {
+        return Jwts.parser()
                 .verifyWith(Keys.hmacShaKeyFor(secret.getBytes()))
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
+    }
 
+    public boolean validateToken(String token, UserDetails userDetails) {
+        Claims claims = this.parseToken(token);
         String username = claims.getSubject();
         Date expiration = claims.getExpiration();
 
