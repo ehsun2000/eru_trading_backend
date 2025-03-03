@@ -3,6 +3,7 @@ package com.eru.trading.filter;
 import com.eru.trading.service.JwtTokenService;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
+import io.jsonwebtoken.ExpiredJwtException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -28,6 +29,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.Date;
 
 import static org.mockito.Mockito.*;
 
@@ -131,7 +133,19 @@ class JwtFilterTest {
 
     @Test
     @DisplayName("當 token 過期時應該不設置 Authentication")
-    void should_not_set_authentication_when_token_is_expired() {
+    void should_not_set_authentication_when_token_is_expired() throws ServletException, IOException {
+        // Arrange
+        when(request.getHeader(AUTHORIZATION_HEADER)).thenReturn(BEARER_PREFIX + TEST_TOKEN);
+        when(jwtTokenService.parseToken(TEST_TOKEN)).thenThrow(
+                new ExpiredJwtException(null, null, "Token has expired"));
+
+        // Act
+        jwtFilter.doFilterInternal(request, response, filterChain);
+
+        // Assert
+        verify(filterChain).doFilter(request, response);
+        verifyNoInteractions(userDetailsService);
+        assertNull(SecurityContextHolder.getContext().getAuthentication());
     }
 
 }
