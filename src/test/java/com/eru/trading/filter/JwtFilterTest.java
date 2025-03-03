@@ -4,6 +4,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -41,26 +44,16 @@ class JwtFilterTest {
         jwtFilter = new JwtAuthenticationFilter();
     }
 
-    @Test
-    @DisplayName("當請求沒有 Authorization header 時應該直接通過")
-    void should_pass_through_when_no_auth_header() throws ServletException, IOException {
+    @ParameterizedTest(name = "當 Authorization header 為 {0} 時應該直接通過")
+    @NullAndEmptySource
+    @ValueSource(strings = {
+            "Basic dXNlcjpwYXNzd29yZA==",
+            "Digest xyz",
+            "OAuth abc"
+    })
+    void should_pass_through_when_not_bearer_token(String headerValue) throws ServletException, IOException {
         // Arrange
-        when(request.getHeader(AUTHORIZATION_HEADER)).thenReturn(null);
-
-        // Act
-        jwtFilter.doFilterInternal(request, response, filterChain);
-
-        // Assert
-        verify(filterChain).doFilter(request, response);
-        verifyNoMoreInteractions(filterChain);
-        assertNull(SecurityContextHolder.getContext().getAuthentication());
-    }
-
-    @Test
-    @DisplayName("當 Authorization header 不是以 Bearer 開頭時應該直接通過")
-    void should_pass_through_when_not_bearer_token() throws ServletException, IOException {
-        // Arrange
-        when(request.getHeader(AUTHORIZATION_HEADER)).thenReturn("Basic dXNlcjpwYXNzd29yZA==");
+        when(request.getHeader(AUTHORIZATION_HEADER)).thenReturn(headerValue);
 
         // Act
         jwtFilter.doFilterInternal(request, response, filterChain);
