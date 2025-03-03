@@ -11,6 +11,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.Arguments;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -30,6 +32,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Date;
+import java.util.stream.Stream;
 
 import static org.mockito.Mockito.*;
 
@@ -115,29 +118,23 @@ class JwtFilterTest {
         assertNull(authentication.getCredentials());
     }
 
-    @Test
-    @DisplayName("當 token 無效時應該不設置 Authentication")
-    void should_not_set_authentication_when_token_is_invalid() throws ServletException, IOException {
-        // Arrange
-        when(request.getHeader(AUTHORIZATION_HEADER)).thenReturn(BEARER_PREFIX + TEST_TOKEN);
-        when(jwtTokenService.parseToken(TEST_TOKEN)).thenThrow(new JwtException("Invalid token"));
-
-        // Act
-        jwtFilter.doFilterInternal(request, response, filterChain);
-
-        // Assert
-        verify(filterChain).doFilter(request, response);
-        verifyNoInteractions(userDetailsService);
-        assertNull(SecurityContextHolder.getContext().getAuthentication());
+    private static Stream<Arguments> provideTokenExceptions() {
+        return Stream.of(
+                Arguments.of(
+                        "無效",
+                        new JwtException("Invalid token")),
+                Arguments.of(
+                        "過期",
+                        new ExpiredJwtException(null, null, "Token has expired")));
     }
 
-    @Test
-    @DisplayName("當 token 過期時應該不設置 Authentication")
-    void should_not_set_authentication_when_token_is_expired() throws ServletException, IOException {
+    @ParameterizedTest(name = "當 token {0} 時應該不設置 Authentication")
+    @MethodSource("provideTokenExceptions")
+    void should_not_set_authentication_when_token_invalid(String scenario, Exception exception)
+            throws ServletException, IOException {
         // Arrange
         when(request.getHeader(AUTHORIZATION_HEADER)).thenReturn(BEARER_PREFIX + TEST_TOKEN);
-        when(jwtTokenService.parseToken(TEST_TOKEN)).thenThrow(
-                new ExpiredJwtException(null, null, "Token has expired"));
+        when(jwtTokenService.parseToken(TEST_TOKEN)).thenThrow(exception);
 
         // Act
         jwtFilter.doFilterInternal(request, response, filterChain);
