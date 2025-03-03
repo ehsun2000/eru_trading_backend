@@ -22,6 +22,8 @@ import static org.mockito.Mockito.*;
 @DisplayName("JWT Filter 測試")
 class JwtFilterTest {
 
+    private static final String AUTHORIZATION_HEADER = "Authorization";
+
     @Mock
     private HttpServletRequest request;
 
@@ -43,7 +45,7 @@ class JwtFilterTest {
     @DisplayName("當請求沒有 Authorization header 時應該直接通過")
     void should_pass_through_when_no_auth_header() throws ServletException, IOException {
         // Arrange
-        when(request.getHeader("Authorization")).thenReturn(null);
+        when(request.getHeader(AUTHORIZATION_HEADER)).thenReturn(null);
 
         // Act
         jwtFilter.doFilterInternal(request, response, filterChain);
@@ -56,7 +58,17 @@ class JwtFilterTest {
 
     @Test
     @DisplayName("當 Authorization header 不是以 Bearer 開頭時應該直接通過")
-    void should_pass_through_when_not_bearer_token() {
+    void should_pass_through_when_not_bearer_token() throws ServletException, IOException {
+        // Arrange
+        when(request.getHeader(AUTHORIZATION_HEADER)).thenReturn("Basic dXNlcjpwYXNzd29yZA==");
+
+        // Act
+        jwtFilter.doFilterInternal(request, response, filterChain);
+
+        // Assert
+        verify(filterChain).doFilter(request, response);
+        verifyNoMoreInteractions(filterChain);
+        assertNull(SecurityContextHolder.getContext().getAuthentication());
     }
 
     @Test
